@@ -33,10 +33,14 @@ export const generateFirstRound = (teams: Team[], region: string): Matchup[] => 
   const regionTeams = teams.filter(team => team.region === region);
   const matchups: Matchup[] = [];
   
-  // Standard NCAA tournament seeding pairs (1v16, 2v15, etc)
-  for (let i = 1; i <= 8; i++) {
-    const team1 = regionTeams.find(t => t.seed === i);
-    const team2 = regionTeams.find(t => t.seed === 17 - i);
+  // First round matchups (1v16, 8v9, 5v12, 4v13, 6v11, 3v14, 7v10, 2v15)
+  const firstRoundPairs = [
+    [1, 16], [8, 9], [5, 12], [4, 13], [6, 11], [3, 14], [7, 10], [2, 15]
+  ];
+  
+  for (const [seed1, seed2] of firstRoundPairs) {
+    const team1 = regionTeams.find(t => t.seed === seed1);
+    const team2 = regionTeams.find(t => t.seed === seed2);
     if (team1 && team2) {
       matchups.push({ team1, team2, round: 1 });
     }
@@ -53,34 +57,41 @@ export const simulateRegion = (teams: Team[], region: string): SimulationResult[
 
   while (currentRound.length > 0) {
     const nextRound: Matchup[] = [];
+    const roundWinners: Team[] = [];
     
-    for (let i = 0; i < currentRound.length; i += 2) {
-      const match1 = currentRound[i];
-      const winner1 = simulateGame(match1.team1, match1.team2);
-      const loser1 = winner1 === match1.team1 ? match1.team2 : match1.team1;
+    // Simulate all games in current round
+    for (const match of currentRound) {
+      const winner = simulateGame(match.team1, match.team2);
+      const loser = winner === match.team1 ? match.team2 : match.team1;
       
       results.push({
-        winner: winner1,
-        loser: loser1,
+        winner,
+        loser,
         round: roundNumber
       });
-
-      if (i + 1 < currentRound.length) {
-        const match2 = currentRound[i + 1];
-        const winner2 = simulateGame(match2.team1, match2.team2);
-        const loser2 = winner2 === match2.team1 ? match2.team2 : match2.team1;
-        
-        results.push({
-          winner: winner2,
-          loser: loser2,
-          round: roundNumber
-        });
-
-        nextRound.push({
-          team1: winner1,
-          team2: winner2,
-          round: roundNumber + 1
-        });
+      
+      roundWinners.push(winner);
+    }
+    
+    // Generate next round matchups
+    if (roundWinners.length > 1) {
+      if (roundNumber === 1) {
+        // Second round matchups (1/16 vs 8/9, 5/12 vs 4/13, 6/11 vs 3/14, 7/10 vs 2/15)
+        nextRound.push(
+          { team1: roundWinners[0], team2: roundWinners[1], round: roundNumber + 1 },
+          { team1: roundWinners[2], team2: roundWinners[3], round: roundNumber + 1 },
+          { team1: roundWinners[4], team2: roundWinners[5], round: roundNumber + 1 },
+          { team1: roundWinners[6], team2: roundWinners[7], round: roundNumber + 1 }
+        );
+      } else {
+        // Sweet 16 and Elite 8 matchups
+        for (let i = 0; i < roundWinners.length; i += 2) {
+          nextRound.push({
+            team1: roundWinners[i],
+            team2: roundWinners[i + 1],
+            round: roundNumber + 1
+          });
+        }
       }
     }
     
