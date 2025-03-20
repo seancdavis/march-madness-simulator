@@ -20,15 +20,18 @@ function App() {
     };
     
     // Get Final Four teams (last winner from each region)
-    const finalFourTeams = Object.values(newResults).map(
-      regionResults => regionResults[regionResults.length - 1].winner
-    );
+    const eastWinner = newResults.East[newResults.East.length - 1].winner;
+    const westWinner = newResults.West[newResults.West.length - 1].winner;
+    const southWinner = newResults.South[newResults.South.length - 1].winner;
+    const midwestWinner = newResults.Midwest[newResults.Midwest.length - 1].winner;
     
-    // Simulate Final Four
-    const semifinal1Winner = simulateGame(finalFourTeams[0], finalFourTeams[1]);
-    const semifinal1Loser = semifinal1Winner === finalFourTeams[0] ? finalFourTeams[1] : finalFourTeams[0];
-    const semifinal2Winner = simulateGame(finalFourTeams[2], finalFourTeams[3]);
-    const semifinal2Loser = semifinal2Winner === finalFourTeams[2] ? finalFourTeams[3] : finalFourTeams[2];
+    const finalFourTeams = [eastWinner, midwestWinner, southWinner, westWinner];
+    
+    // Simulate Final Four (East vs Midwest, South vs West)
+    const semifinal1Winner = simulateGame(eastWinner, midwestWinner);
+    const semifinal1Loser = semifinal1Winner === eastWinner ? midwestWinner : eastWinner;
+    const semifinal2Winner = simulateGame(southWinner, westWinner);
+    const semifinal2Loser = semifinal2Winner === southWinner ? westWinner : southWinner;
     
     const newFinalFourResults = [
       { winner: semifinal1Winner, loser: semifinal1Loser, round: 5 },
@@ -107,7 +110,9 @@ function App() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {finalFourResults.map((result, idx) => (
                       <div key={idx} className="bg-gray-50 p-4 rounded-lg">
-                        <h3 className="text-lg font-semibold mb-2">Semifinal {idx + 1}</h3>
+                        <h3 className="text-lg font-semibold mb-2">
+                          Semifinal {idx + 1}: {idx === 0 ? 'East vs Midwest' : 'South vs West'}
+                        </h3>
                         <div className="text-base">
                           <span className="font-medium text-blue-600">{result.winner.name}</span> ({result.winner.seed}) def.{' '}
                           <span className="text-gray-600">{result.loser.name}</span> ({result.loser.seed})
